@@ -2,6 +2,7 @@ package com.example.demo.service;
 
 import net.datafaker.Faker;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.stereotype.Service;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -16,7 +17,9 @@ public class DataGenService {
     }
 
     public List<Object> generateRecords(Object template, int count) {
-        return IntStream.range(0, count).mapToObj( i -> processTemplate(template)).collect(Collectors.toList());
+        return IntStream.range(0, count)
+                        .mapToObj( i -> processTemplate(template))
+                        .collect(Collectors.toList());
     }
 
     private Object processTemplate(Object input) {
