@@ -34,7 +34,15 @@ public class DataGenService {
                     .collect(Collectors.toList());
     }
     else if(input instanceof String str && str.contains("#{")) {
-        return faker.expression(str);
+         String result = faker.expression(str);
+         if (result.matches("\\d+")) {
+            try {
+                return Long.parseLong(result);
+            } catch (NumberFormatException e) {
+                return result; // Return as string if it's too large for Long
+            }
+        }
+        return  result;
     }
         return input; // Replace with generated data based on the template
     }
