@@ -1,4 +1,4 @@
-package comp.example.demo.config;
+package com.example.demo.config;
 
 import net.datafaker.Faker;
 import org.springframework.context.annotation.Bean;

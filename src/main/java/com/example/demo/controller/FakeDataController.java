@@ -2,10 +2,13 @@ package com.example.demo.controller;
 
 import net.datafaker.Faker;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import com.example.demo.service.DataGenService;
+
+import io.micrometer.core.ipc.http.HttpSender.Response;
+
 import java.util.List;
-import org.springframework.web.bind.annotation.CrossOrigin;
 
 
 
@@ -14,11 +17,14 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 @CrossOrigin(origins = "*")
 public class FakeDataController {
 
-private final DataGenService dataGenService;
+    @Autowired
+    private DataGenService dataGenService;
 
-    public FakeDataController(DataGenService dataGenService) {
-        this.dataGenService = dataGenService;
-    }
+// private final DataGenService dataGenService;
+
+//     public FakeDataController(DataGenService dataGenService) {
+//         this.dataGenService = dataGenService;
+//     }
 
     // @PostMapping("/datagen")
     // public ResponseEntity<List<String>> generateData(@RequestBody String template, @RequestParam int count) {
@@ -38,6 +44,14 @@ private final DataGenService dataGenService;
             return ResponseEntity.badRequest().build();
         }
         return ResponseEntity.ok(dataGenService.generateRecords(template, count));
+    }
+
+    @PostMapping("dgenformat")
+    public ResponseEntity<Object> generateDataAvro(@RequestBody String template, @RequestParam int count, @RequestParam String schemaPath) {
+        if( template == null || template.isEmpty() || count <= 0 || schemaPath == null || schemaPath.isEmpty()) {
+            return ResponseEntity.badRequest().build();
+        }
+        return ResponseEntity.ok(dataGenService.generateSchemabasedData(template, count, schemaPath));
     }
      
     
