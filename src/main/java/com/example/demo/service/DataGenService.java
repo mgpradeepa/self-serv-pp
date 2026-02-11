@@ -1,6 +1,8 @@
 package com.example.demo.service;
 
 import net.datafaker.Faker;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -14,6 +16,9 @@ public class DataGenService {
     private Logger logger = LoggerFactory.getLogger(DataGenService.class);
 
     private final Faker faker;
+
+    @Autowired
+    private KafkaService kafkaService;
 
     public DataGenService() {
         this.faker = new Faker();
@@ -72,7 +77,61 @@ public class DataGenService {
 
     }
 
-    private Object convertToProtobuf(List<Object> records, Class<?> protoClass) {
+    public boolean generateAndPushToDestination( Object template, int count, String schemaPath, String destination) {
+
+        List<Object>  generatedRecords  = new ArrayList<>();
+        logger.info("destination content: {}",destination);
+
+        String[] destinationPoints = destination.split("\\|");
+         logger.info("destination -> {} {}",destinationPoints[0], destinationPoints[1]);
+        if(destinationPoints.length != 2) {
+            logger.error("Invalid destination format. Expected format: 'brokerUrl||topic'");
+            return false;
+        }
+
+
+        switch (schemaPath) {
+            case "avro": 
+                    generatedRecords = generateSchemabasedData(template, count, schemaPath);
+                    logger.info("Avro records generated: {}", generatedRecords.size());
+                    if(generatedRecords.size() > 0) {
+                        logger.info("Sample Avro record: {}", generatedRecords.get(0));
+                        for(Object avroRecord : generatedRecords) {
+                            kafkaService.publishDataToKafka(destinationPoints[0], destinationPoints[1], avroRecord.toString(), "avro");               
+
+                        }
+                         logger.info("Published all avro messages to Kafka on the topic  {}", destinationPoints[1]);
+                    }
+                
+                break;
+            case "protobuf":
+                generatedRecords = convertToProtobuf(generateRecords(template, count), null);
+                logger.info("Protobuf records generated: {}", generatedRecords.size());
+                 break; 
+        
+            default:
+                generatedRecords = generateRecords(template, count);
+                logger.info("Json records generated: {}", generatedRecords.size());
+                 if(generatedRecords.size() > 0) {
+                        logger.info("Sample record: {}", generatedRecords.get(0));
+                        for(Object dataRecord : generatedRecords) {
+                            kafkaService.publishDataToKafka(destinationPoints[0], destinationPoints[1], dataRecord.toString(), "json");               
+
+                        }
+                         logger.info("Published all json messages to Kafka on the topic  {}", destinationPoints[1]);
+                    }
+                break;
+        }
+
+        return true;
+        
+        
+
+    }
+
+
+
+    private List<Object>  convertToProtobuf(List<Object> records, Class<?> protoClass) {
         //TODO:  Implement protobuf for future usage
         throw new UnsupportedOperationException("Protobuf conversion not yet implemented");
     }
