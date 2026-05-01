@@ -1,6 +1,9 @@
 package com.example.demo.service;
 
 import net.datafaker.Faker;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.protobuf.Struct;
+import com.google.protobuf.util.JsonFormat;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -14,6 +17,7 @@ import org.slf4j.LoggerFactory;
 @Service
 public class DataGenService {
     private Logger logger = LoggerFactory.getLogger(DataGenService.class);
+    private static final ObjectMapper objectMapper = new ObjectMapper();
 
     private final Faker faker;
 
@@ -132,7 +136,24 @@ public class DataGenService {
 
 
     private List<Object>  convertToProtobuf(List<Object> records, Class<?> protoClass) {
-        //TODO:  Implement protobuf for future usage
-        throw new UnsupportedOperationException("Protobuf conversion not yet implemented");
+        List<Object> protobufRecords = new ArrayList<>();
+
+        for (Object record : records) {
+            try {
+                // Convert input record (String/Map/etc.) to canonical JSON before protobuf parsing.
+                String jsonPayload = (record instanceof String str)
+                        ? str
+                        : objectMapper.writeValueAsString(record);
+
+                Struct.Builder structBuilder = Struct.newBuilder();
+                JsonFormat.parser().merge(jsonPayload, structBuilder);
+                protobufRecords.add(structBuilder.build().toByteArray());
+            } catch (Exception e) {
+                logger.error("Error converting to Protobuf: {}", e.getMessage());
+                logger.debug("Failed Protobuf record payload: {}", record);
+            }
+        }
+
+        return protobufRecords;
     }
 }

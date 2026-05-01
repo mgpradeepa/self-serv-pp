@@ -112,6 +112,11 @@
     <artifactId>kafka-avro-serializer</artifactId>
     <version>8.1.1</version>
 </dependency>
+<dependency>
+    <groupId>com.google.protobuf</groupId>
+    <artifactId>protobuf-java-util</artifactId>
+    <version>4.33.0</version>
+</dependency>
 
 	</dependencies>
 
